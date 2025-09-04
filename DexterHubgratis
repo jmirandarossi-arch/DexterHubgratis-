@@ -1,0 +1,154 @@
+--// DexterHub - Ponto Vermelho + Teleport Steal + Auto Speed
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
+
+-- Variável que guarda o ponto vermelho
+local pontoMarcado = nil
+-- Variável do speed
+local autoSpeedAtivo = false
+local speedValue = 16 -- padrão Roblox
+
+-- Função: marcar ponto
+local function marcarPonto()
+    pontoMarcado = hrp.Position
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "DexterHub",
+        Text = "📍 Ponto vermelho marcado!",
+        Duration = 3
+    })
+end
+
+-- Função: teleport steal com auto fly
+local function teleportSteal()
+    if not pontoMarcado then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "DexterHub",
+            Text = "❌ Nenhum ponto vermelho marcado!",
+            Duration = 3
+        })
+        return
+    end
+
+    local info = TweenInfo.new(
+        2, -- tempo até o ponto
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+
+    local objetivo = {CFrame = CFrame.new(pontoMarcado)}
+
+    local tween = TweenService:Create(hrp, info, objetivo)
+    tween:Play()
+
+    tween.Completed:Connect(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "DexterHub",
+            Text = "✅ Teleport Steal concluído!",
+            Duration = 3
+        })
+    end)
+end
+
+-- Função: aplicar auto speed
+local function aplicarSpeed()
+    while autoSpeedAtivo do
+        humanoid.WalkSpeed = speedValue
+        task.wait(0.1)
+    end
+    humanoid.WalkSpeed = 16 -- volta ao padrão quando desliga
+end
+
+-- GUI principal (DexterHub)
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "DexterHub"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 230, 0, 180)
+Frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Title.Text = "⚡ DexterHub"
+Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+
+-- Botão marcar ponto
+local Button1 = Instance.new("TextButton", Frame)
+Button1.Size = UDim2.new(1, -20, 0, 30)
+Button1.Position = UDim2.new(0, 10, 0, 40)
+Button1.Text = "🔴 Marcar Ponto"
+Button1.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Button1.TextColor3 = Color3.fromRGB(255, 255, 255)
+Button1.Font = Enum.Font.SourceSansBold
+Button1.TextSize = 18
+Button1.MouseButton1Click:Connect(marcarPonto)
+
+-- Botão teleport steal
+local Button2 = Instance.new("TextButton", Frame)
+Button2.Size = UDim2.new(1, -20, 0, 30)
+Button2.Position = UDim2.new(0, 10, 0, 80)
+Button2.Text = "🚀 Teleport Steal (Auto Fly)"
+Button2.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Button2.TextColor3 = Color3.fromRGB(255, 255, 255)
+Button2.Font = Enum.Font.SourceSansBold
+Button2.TextSize = 18
+Button2.MouseButton1Click:Connect(teleportSteal)
+
+-- Caixa de texto para velocidade
+local SpeedBox = Instance.new("TextBox", Frame)
+SpeedBox.Size = UDim2.new(1, -20, 0, 25)
+SpeedBox.Position = UDim2.new(0, 10, 0, 120)
+SpeedBox.PlaceholderText = "Digite a velocidade..."
+SpeedBox.Text = ""
+SpeedBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.Font = Enum.Font.SourceSans
+SpeedBox.TextSize = 16
+
+-- Botão Auto Speed
+local Button3 = Instance.new("TextButton", Frame)
+Button3.Size = UDim2.new(1, -20, 0, 30)
+Button3.Position = UDim2.new(0, 10, 0, 150)
+Button3.Text = "⚡ Auto Speed: OFF"
+Button3.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Button3.TextColor3 = Color3.fromRGB(255, 255, 255)
+Button3.Font = Enum.Font.SourceSansBold
+Button3.TextSize = 18
+
+Button3.MouseButton1Click:Connect(function()
+    if SpeedBox.Text ~= "" then
+        local val = tonumber(SpeedBox.Text)
+        if val then
+            speedValue = val
+        end
+    end
+
+    autoSpeedAtivo = not autoSpeedAtivo
+    Button3.Text = "⚡ Auto Speed: " .. (autoSpeedAtivo and "ON" or "OFF")
+
+    if autoSpeedAtivo then
+        task.spawn(aplicarSpeed)
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "DexterHub",
+            Text = "⚡ Auto Speed ativado! ("..speedValue..")",
+            Duration = 3
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "DexterHub",
+            Text = "❌ Auto Speed desativado!",
+            Duration = 3
+        })
+    end
+end)
